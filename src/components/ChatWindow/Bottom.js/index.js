@@ -15,6 +15,7 @@ function assembleMessage (profile,chatId){
             ...(profile.avatar ? { avatar : profile.avatar } : {})
         },
         createdAt : firebase.database.ServerValue.TIMESTAMP,
+        likeCount : 0
     }
 }
 const ChatBottom = () => {
@@ -45,15 +46,17 @@ const ChatBottom = () => {
         try{
             await database.ref().update(updates)
             setIsLoading(false)
+            setInput('')
         }
         catch(err){
             setIsLoading(false)
+            setInput('')
             Alert.error(err.message,3000)
         }
     }
     const onKeyDown = e => {
-        e.preventDefault()
-        if(e.target.value === 13){
+        if(e.keyCode === 13){
+            e.preventDefault()
             onSendClick()
         }
     }

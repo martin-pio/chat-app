@@ -9,7 +9,7 @@ const Sidebar = () => {
     const [height,setHeight] = useState(0)
     useEffect(()=> {
         if(topSideBarRef.current){
-            setHeight(topSideBarRef.current.setHeight)
+            setHeight(topSideBarRef.current.scrollHeight)
         }
     },[topSideBarRef])
 

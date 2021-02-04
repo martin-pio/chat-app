@@ -6,6 +6,7 @@ import { database, storage } from '../../misc/firebase'
 import { useProfile } from '../../context/profile.context'
 import ProfileAvatar from '../ProfileAvatar'
 import '../../styles/utility.scss'
+import { getUserUpdates } from '../../misc/helper'
 
 
 const fileTypes = '.png, .jpeg, .jpg'
@@ -59,8 +60,9 @@ const AvatarUploadBtn = () => {
                     }
                 )
             const downloadUrl = await uploadAvatarResult.ref.getDownloadURL()
-            const userAvatarRef = database.ref(`/profiles/${profile.uid}`).child('avatar')
-            await userAvatarRef.set(downloadUrl)
+            
+            const updates = await getUserUpdates(profile.uid,'avatar',downloadUrl,database)            
+            await database.ref().update(updates)
             setIsLoading(false)
             Alert.success('Avatar has been uploaded',3000)
         }
@@ -122,3 +124,4 @@ const AvatarUploadBtn = () => {
 }
 
 export default AvatarUploadBtn
+// permission_denied at /mesages: Client doesn't have permission to access the desired data.

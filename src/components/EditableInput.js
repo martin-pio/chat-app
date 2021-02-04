@@ -8,6 +8,7 @@ const EditableInput = ({
     placeholder = 'Write your Value',
     // eslint-disable-next-line no-unused-vars
     emptyMsg = 'Input is empty',
+    wrapperClassName='',
     ...inputProps
 }) => {
 
@@ -34,7 +35,7 @@ const EditableInput = ({
     },[initialValue])
 
     return (
-        <div>
+        <div className={wrapperClassName}>
             {label}
             <InputGroup>
                 <Input 
