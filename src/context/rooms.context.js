@@ -10,10 +10,11 @@ export const RoomsProvider = ({ children }) => {
     useEffect(()=>{
         const roomListRef = database.ref('rooms')
 
-        roomListRef.on('value', snap =>{
+        roomListRef.on('value', (snap) =>{
             const data = transformToArrayWithId(snap.val())
             setRooms(data)
         })
+
         return () =>{
             roomListRef.off()
         }

@@ -1,7 +1,8 @@
+/* eslint-disable no-alert */
 import React, { useCallback, useEffect, useState } from 'react'
 import {useParams } from 'react-router'
 import { Alert } from 'rsuite'
-import { auth, database } from '../../../misc/firebase'
+import { auth, database, storage } from '../../../misc/firebase'
 import { transformToArrayWithId } from '../../../misc/helper'
 import MessageItem from './MessageItem'
 // eslint-disable-next-line arrow-body-style
@@ -24,6 +25,42 @@ const Messages = () => {
             messageRef.off('value')
         }
     },[chatId])
+
+    const handleDelete = useCallback(async (msgId,file) => {
+        if (!window.confirm('Delete this Message ?')){
+            return
+        }
+        const isLast = messages[messages.length - 1].id === msgId
+        const updates = {}
+        updates[`/messages/${msgId}`] = null
+        if(isLast && messages.length>1){
+            updates[`/rooms/${chatId}/lastMessage`] = {
+                ...messages[messages.length-2],
+                msgId : messages[messages.length -2].id
+            }
+        }
+        if(isLast && messages.length === 1){
+            updates[`/rooms/${chatId}/lastMessage`] = null
+        }
+
+        try{
+            await database.ref().update(updates)
+            Alert.info('Message has been deleted...',3000)
+        }
+        catch(err){
+            // eslint-disable-next-line consistent-return
+            return Alert.error(err.message,3000)
+        }
+
+        if(file){
+            try {
+                const fileRef = await storage.refFromURL(file.url)
+                await fileRef.delete()
+            } catch (err) {
+                Alert.error(err.message)
+            }
+        }
+    },[chatId,messages])
 
     const handleAdmin = useCallback(async (uid) =>{
         const adminsRef = database.ref(`/rooms/${chatId}/admins`)
@@ -76,7 +113,12 @@ const Messages = () => {
     return (
         <ul className='msg-list custom-scroll'>
             {isChatEmpty && <li>No Messages yet</li>}
-            {canShowMessages && messages.map(msg => <MessageItem key={msg.id} message={msg} handleAdmin={handleAdmin} handleLike={handleLike}/>)}
+            {canShowMessages && messages.map(msg => <MessageItem key={msg.id} 
+                                                            message={msg} 
+                                                            handleAdmin={handleAdmin} 
+                                                            handleLike={handleLike}
+                                                            handleDelete = {handleDelete}
+                                                            />)}
         </ul>
     )
 }

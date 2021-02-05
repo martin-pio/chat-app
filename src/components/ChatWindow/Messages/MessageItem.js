@@ -7,10 +7,31 @@ import { auth } from '../../../misc/firebase'
 import PresenceDot from '../../PresenceDot'
 import ProfileAvatar from '../../ProfileAvatar'
 import IconbtnControl from './IconbtnControl'
+import ImageBtnModal from './ImageBtnModal'
 import ProfileInfoBtnModal from './ProfileInfoBtnModal'
 // eslint-disable-next-line arrow-body-style
-const MessageItem = ({ message,handleAdmin,handleLike }) => {
-    const { author, createdAt, text, likes, likeCount} = message
+const renderFileMessage = (file) => {
+
+    if(file.contentType.includes('image')){
+        return (<div className='height-220'> 
+                    <ImageBtnModal src = {file.url} filename = {file.name} />
+                </div>)
+    }
+    if(file.contentType.includes('audio')){
+        return(
+            // eslint-disable-next-line jsx-a11y/media-has-caption
+            <audio controls>
+                <source src={file.url} type='audio/mp3'/>
+                Your Browser does not support audio element
+            </audio>
+        )
+    }
+
+    return <a href={file.url} >Download {file.name}</a>
+}
+
+const MessageItem = ({ message,handleAdmin,handleLike,handleDelete }) => {
+    const { author, createdAt, text, file, likes, likeCount} = message
     const isAdmin = useCurrentRoom(v => v.isAdmin)
     const admins = useCurrentRoom(v => v.admins)
     
@@ -46,9 +67,20 @@ const MessageItem = ({ message,handleAdmin,handleLike }) => {
                     onClick ={()=>handleLike(message.id)}
                     badgeContent = {likeCount}
                 />
+                {
+                    isAuthor && (
+                        <IconbtnControl
+                            isVisible = {canShowIcons}
+                            iconName = 'close'
+                            tooltip = 'delete this message'
+                            onClick ={()=>handleDelete(message.id,file)}                            
+                        />
+                    )
+                }
             </div>
             <div>
-                <span className='word-breal-all'>{text}</span>
+                {text && <span className='word-breal-all'>{text}</span>}
+                {file && renderFileMessage(file)}
             </div>
         </li>
     )

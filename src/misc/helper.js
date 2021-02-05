@@ -11,8 +11,8 @@ export function getNameInitials(name) {
                 
 export function transformToArrayWithId(snapVal) {
     return snapVal ? Object.keys(snapVal).map(roomId => ({...snapVal[roomId],id:roomId})) : []
-}
-               
+} 
+
 export function transformToArr(snapVal) {
     return snapVal ? Object.keys(snapVal) : []
 }
@@ -36,4 +36,18 @@ export async function getUserUpdates(userId,keyToUpdate,value,db){
     })
 
     return updates
+}
+
+export function groupBy(array, groupingKeyFn){
+    return array.reduce((result,item) => {
+        const groupingKey = groupingKeyFn(item)
+
+        if(!result[groupingKey]){
+            result[groupingKey] = []
+        }
+
+        result[groupingKey].push(item)
+
+        return result
+    },{})
 }
