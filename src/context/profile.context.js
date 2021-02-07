@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import firebase from 'firebase/app'
-import { auth, database } from '../misc/firebase'
+import { auth, database, messaging } from '../misc/firebase'
 
 export const isOfflineForDatabase = {
     state : 'offline',
@@ -21,7 +21,9 @@ export const ProfileProvider = ({ children }) => {
     useEffect(()=>{
         let userRef
         let userStatusRef
-        const authUnsub = auth.onAuthStateChanged(authObj => {
+        let tokenRefresherUnsub
+
+        const authUnsub = auth.onAuthStateChanged(async authObj => {
             if(authObj){
                 userStatusRef = database.ref(`/status/${authObj.uid}`)                
                 userRef = database.ref(`/profiles/${authObj.uid}`)
@@ -47,6 +49,28 @@ export const ProfileProvider = ({ children }) => {
                         userStatusRef.set(isOnlineForDatabase)
                     })
                 })
+
+                if(messaging){
+                    const currentToken = await messaging.getToken()
+                    try {
+                        if (currentToken) {
+                            await database.ref(`/fcm_tokens/${currentToken}`).set(authObj.uid)
+                        }
+                    } catch (err) {
+                        console.log('An error occurred while retrieving token. ', err);
+                    }
+                    
+                    tokenRefresherUnsub = messaging.onTokenRefresh(async () => {
+                        try {
+                        if (currentToken) {
+                            await database.ref(`/fcm_tokens/${currentToken}`).set(authObj.uid)
+                        }
+                    }
+                    catch (err) {
+                        console.log('An error occurred while retrieving token. ', err);
+                    }
+                    })
+                }
             }
             else{
                 if(userRef){
@@ -55,19 +79,27 @@ export const ProfileProvider = ({ children }) => {
                 if(userStatusRef){
                     userStatusRef.off() 
                 }
+                if(tokenRefresherUnsub){
+                    tokenRefresherUnsub()
+                }
+
                 setProfile(null)
                 setIsLoading(false)
             }
             
         })
         return () =>{
+            authUnsub()
+            
             if(userRef){
                 userRef.off() 
+            }
+            if(tokenRefresherUnsub){
+                tokenRefresherUnsub()
             }
             if(userStatusRef){
                 userStatusRef.off() 
             }
-            authUnsub()
         }
     },[])
     return (
@@ -78,3 +110,5 @@ export const ProfileProvider = ({ children }) => {
 }
 
 export const useProfile = () => useContext(ProfileContext)
+
+
